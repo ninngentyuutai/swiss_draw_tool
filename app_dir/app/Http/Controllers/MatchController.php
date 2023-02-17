@@ -11,7 +11,7 @@ class MatchController extends Controller
 // 勝敗報告
 // todo userIDを直で送るのはうんち過ぎる
 
-    function victoryReport(string $userId, array $result) {
+    function victory_report(string $userId, array $result) {
 
 
         echo 'こんんうづわ';

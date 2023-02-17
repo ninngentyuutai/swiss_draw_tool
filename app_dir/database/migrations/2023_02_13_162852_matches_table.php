@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('result')->nullable();
             $table->string('sataus')->nullable();       
             $table->string('last_updated_by')->nullable();
-        });        
+        });
     }
 
     /**

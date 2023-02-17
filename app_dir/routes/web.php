@@ -2,6 +2,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AggregateController;
 use App\Http\Controllers\PromoterController;
+use App\Http\Controllers\ParticipantController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -18,6 +20,7 @@ Route::get('/aggregate/all', [AggregateController::class, 'index']);
 
 Route::get('/promoter/next_match', [PromoterController::class, 'next_match']);
 
+Route::get('/registration/register_end_participant', [ParticipantController::class, 'register_end_participant']);
 
 
 

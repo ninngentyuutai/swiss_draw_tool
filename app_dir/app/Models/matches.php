@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+
 
 class matches extends Model
 {
@@ -17,37 +19,46 @@ class matches extends Model
     const STATUS_ONE_END = 4;
     const STATUS_TWO_END = 5;
 
-    
-
     protected $table = 'matches';
-
-
-
-
+    /**
+     * create_matches
+     * 対戦結果を作成
+     *
+     * @param int $tournamentId
+     * @param int $round
+     * @param $combinations
+     * @return bool update saccess :true
+     */
     public function create_matches(int $tournamentId, int $round, $combinations) {
         // データベースに値をinsert
-        $matches = [];
-        $i = 0;
-        foreach ($combinations as $key => $combination) {
-            $matches[$i]["tournament_id"] = $tournamentId;
-            $matches[$i]["round"] = $round;
-            $matches[$i]["participant1_id"] = $combination[0];//一人目
-            $matches[$i]["participant2_id"] = $combination[1];//二人目
-            $i = $i + 1;
-        }
-        
-        $save_matches = $this->insert($matches);
-    }
 
+        try {
+            $matches = [];
+            $i = 0;
+            foreach ($combinations as $key => $combination) {
+                $matches[$i]["tournament_id"] = $tournamentId;
+                $matches[$i]["round"] = $round;
+                $matches[$i]["participant1_id"] = $combination[0];//一人目
+                $matches[$i]["participant2_id"] = $combination[1];//二人目
+                $i = $i + 1;
+            }
+            
+            $save_matches = $this->insert($matches);
+            return true;
+        } catch ( Exception $ex ) {
+            return false;
+        }
+    }
+    
     /**
      * updateResult
      * 対戦結果を登録
      *
-     * @string $id
-     * @string $participant 変更者 :0主催者  1,2 participant
-     * @array $result
-     * @$status
-     * @retrn bool update saccess :true
+     * @param string $id
+     * @param string $participant 変更者 :0主催者  1,2 participant
+     * @param array $result
+     * @param $status
+     * @return bool update saccess :true
      */
     public function updateResult(int $id, string $participant, array $result, $status) {
         //statusチェック
@@ -79,25 +90,29 @@ class matches extends Model
             ->where('tournament_id', $tournamentId)
             ->orderBy('round')
             ->first();
-            
-        $result = $round->isEmpty() ? 1 : $round['round'];
+        $result = is_null($round) ? 0 : $round['round'];
         return $result;
     }
+
     /**
      * is_next_matches
      * 次戦対戦組み合わせを作成できるか判定
      *
-     * @int $tournamentId
-     * @int $round
-     * @retrn bool
+     * @param int $tournamentId
+     * @param int $round
+     * @return bool
      */
     public function is_next_matches(int $tournamentId, $round) {
-        $matches = $this->where([
-            ['tournament_id', $tournamentId],
-            ['round', $round],
-            ['status', '<>', self::STATUS_TWO_END],        
-        ]);
-        $result = $round->isEmpty() ? true : false;
-        return $result;
+        if ($round == 0) {
+            return true;
+        } else {
+            $matches = $this->where([
+                ['tournament_id', $tournamentId],
+                ['round', $round],
+                ['status', '<>', self::STATUS_TWO_END],        
+            ]);
+            $result = is_null($round) ? true : false;
+            return $result;
+        }
     }
 }

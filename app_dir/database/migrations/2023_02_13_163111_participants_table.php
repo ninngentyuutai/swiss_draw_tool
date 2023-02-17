@@ -17,10 +17,10 @@ return new class extends Migration
             $table->id();
             $table->integer('user_id');
             $table->integer('tournament_id');
-            $table->string('battle_record');
-            $table->string('option_keys');
-            $table->string('option_vals');
-            $table->integer('point');      
+            $table->string('battle_record')->nullable();
+            $table->string('option_keys')->nullable();
+            $table->string('option_vals')->nullable();
+            $table->integer('point')->nullable();
         });
     }
     /**
