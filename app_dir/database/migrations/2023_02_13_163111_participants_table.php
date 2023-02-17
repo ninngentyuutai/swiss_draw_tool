@@ -13,14 +13,16 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('tournaments', function (Blueprint $table) {
+        Schema::create('participants', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-
+            $table->integer('user_id');
+            $table->integer('tournament_id');
+            $table->string('battle_record');
+            $table->string('option_keys');
+            $table->string('option_vals');
+            $table->integer('point');      
         });
     }
-    
-
     /**
      * Reverse the migrations.
      *
@@ -28,6 +30,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('tournaments');
+        Schema::dropIfExists('participants');
     }
 };

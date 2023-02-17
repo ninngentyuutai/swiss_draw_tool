@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 
 class AggregateController extends Controller
 {
-    public function index() {
+    public function sum_results() {
         echo 'こんんうづわ';
     }
 }

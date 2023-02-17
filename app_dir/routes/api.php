@@ -14,7 +14,7 @@ use App\Http\Controllers\AggregateController;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-// Route::get('/aggregate/all', [AggregateController::class, 'index']);
+//Route::get('/aggregate/all', [AggregateController::class, 'index']);
 
 // var_dump($_REQUEST);exit();
 //Route::get('/promoter/next_match', [PromoterController::class, 'next_match']);

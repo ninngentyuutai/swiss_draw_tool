@@ -15,10 +15,13 @@ return new class extends Migration
     {
         Schema::create('matches', function (Blueprint $table) {
             $table->id();
-            $table->string('tournament_id');
-            $table->string('participant1_id');
-            $table->string('participant2_id');
-            $table->string('result');
+            $table->integer('tournament_id');
+            $table->integer('round');
+            $table->integer('participant1_id');
+            $table->integer('participant2_id');
+            $table->string('result')->nullable();
+            $table->string('sataus')->nullable();       
+            $table->string('last_updated_by')->nullable();
         });        
     }
 
