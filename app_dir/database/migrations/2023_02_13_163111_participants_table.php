@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('option_keys')->nullable();
             $table->string('option_vals')->nullable();
             $table->integer('point')->nullable();
+            $table->timestamps();
         });
     }
     /**

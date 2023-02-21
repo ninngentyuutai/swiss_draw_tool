@@ -78,7 +78,8 @@ class matches extends Model
 
         $data = [
             'last_updated_by' => $participant,
-            'result' => $result
+            'result' => $result,
+            'status' => $status
         ];
         $this->where('id', $id)
           ->update($data);

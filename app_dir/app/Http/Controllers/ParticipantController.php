@@ -38,8 +38,10 @@ class ParticipantController extends Controller
     public function register_end_participant(Request $request) {
 
         //この辺テストデータ
-        $userId = 1;
+        //userIdはリクエストから取らない
+        $userId = 2;
         //
+        $tournamentId = $request['tournament_id'];
 
         $participantsModel = new participants();
         $participantsModel->create_participant($userId, $tournamentId);

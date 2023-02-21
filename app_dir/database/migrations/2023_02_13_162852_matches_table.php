@@ -20,8 +20,9 @@ return new class extends Migration
             $table->integer('participant1_id');
             $table->integer('participant2_id');
             $table->string('result')->nullable();
-            $table->string('sataus')->nullable();       
+            $table->string('status')->nullable();
             $table->string('last_updated_by')->nullable();
+            $table->timestamps();
         });
     }
 

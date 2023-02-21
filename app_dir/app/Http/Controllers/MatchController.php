@@ -2,19 +2,35 @@
 
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
-//use App\Http\Models\Request;
+use App\Models\matches;
 
 
 class MatchController extends Controller
 {
 
-// 勝敗報告
-// todo userIDを直で送るのはうんち過ぎる
+    /**
+     * victory_report
+     * 勝敗報告
+     *
+     * @param Request $request
+     * @param int $status 
+     * @return bool update saccess :true
+     */
+    function victory_report(Request $request, int $status = 3) {
+        //この辺テストデータ
+        //participantIdはリクエストから取らない
+        $participant = 1;
+        $result = [1,0,2];
+        //
 
-    function victory_report(string $userId, array $result) {
+        $matchesModel = new matches();
+
+        $id = $request['id'];
+        //$result = $request['result'];
+        $result = $matchesModel->updateResult($id, $participant, $result, $status);
+        echo $result;exit();
 
 
-        echo 'こんんうづわ';
     }
 
 
