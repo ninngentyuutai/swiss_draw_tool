@@ -17,7 +17,8 @@ return new class extends Migration
             $table->id();
             $table->integer('promoter_id');
             $table->string('status')->nullable();       
-            $table->dateTime('start_date_time');       
+            $table->dateTime('start_date_time');
+            $table->integer('min_member');
             $table->timestamps();
 
 

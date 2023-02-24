@@ -86,6 +86,13 @@ class matches extends Model
         return true;
     }
     
+    /**
+     * get_last_round
+     * 終了済み回戦数を取得
+     *
+     * @param int $tournamentId
+     * @return int $round
+     */
     public function get_last_round($tournamentId) {
         $round = $this->select('round')
             ->where('tournament_id', $tournamentId)
@@ -115,5 +122,9 @@ class matches extends Model
             $result = is_null($round) ? true : false;
             return $result;
         }
+    }
+
+    public function aaa() {
+        
     }
 }
