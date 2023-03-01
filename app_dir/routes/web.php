@@ -27,6 +27,10 @@ Route::get('/registration/register_end_participant', [ParticipantController::cla
 Route::get('/create_tournament/create_end_tournament', [PromoterController::class, 'create_end_tournament']);
 
 
+Route::get('/batch/start_tournament', [PromoterController::class, 'start_tournament']);
+
+
+
 
 
 Route::get('/', function () {

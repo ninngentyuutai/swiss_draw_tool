@@ -117,9 +117,17 @@ class PromoterController extends Controller
         // }
 
         $participantsModel = new participants();
-        $participants = $participantsModel->get_count_tournament_participants($tournamentId);
+        $participants = $participantsModel->get_tournament_participants($tournamentId,'created');
+        $participantsCount = $participants->count();
+        $combination = $this->set_combination($participants);
 
 
+        $tournamentsModel = new tournaments();
+        $minMember = $tournamentsModel->get_min_member($tournamentId);
+        if ($minMember > $participants) {
+            echo '参加者はいませんでした';exit();
+        }
+        echo '参加者はいました';exit();
         $matchesModel = new matches();
         $nextRound = 1;
         $result = $matchesModel->create_matches($tournamentId, $nextRound, $combination);
@@ -128,7 +136,9 @@ class PromoterController extends Controller
 
     }
 
+    private function set_combination() {
 
+    }
 
 
 }

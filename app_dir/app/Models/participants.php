@@ -35,14 +35,14 @@ class participants extends Model
     }
 
     /**
-     * get_count_tournament_participants
-     * 参加者数を取得
+     * get_tournament_participants
+     * 参加者を取得
      *
      * @param int $tournamentId
      * @param string $status
      * @return bool update saccess :true
      */
-    public function get_count_tournament_participants($tournamentId, $status) {
+    public function get_tournament_participants($tournamentId, $status) {
 
         // const STATUS_CREATED = 0;
         // const STATUS_ACTIVE = 1;
@@ -65,9 +65,9 @@ class participants extends Model
                     $serchStatus = self::STATUS_END;
                     break;
             }
-            $result = $this->where('tournament_id', $tournamentId)->where('status', $serchStatus)->count();
-
-            return true;
+            // echo $serchStatus;exit();
+            $result = $this->where('tournament_id', $tournamentId)->where('status', $serchStatus);
+            return $result;
         } catch ( Exception $ex ) {
             return false;
         }

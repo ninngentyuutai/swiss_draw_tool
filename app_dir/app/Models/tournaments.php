@@ -33,7 +33,7 @@ class tournaments extends Model
      * ユーザーが主催するアクティブな大会IDを取得
      *
      * @param int $userId
-     * @return bool update saccess :true
+     * @return int id
      */
     public function get_tournament_id(int $userId) {
         try {
@@ -48,7 +48,23 @@ class tournaments extends Model
         }
 
     }
-    
 
+    /**
+     * get_min_member
+     * 最小開催人数を取得
+     *
+     * @param int $id
+     * @return int min_member
+     */
+    public function get_min_member($tournamentId) {
+        try {
+            $selectResult = $this->select('min_member')
+                ->where('id', $tournamentId)
+                ->first();
+            return $selectResult->min_member;
+        } catch ( Exception $ex ) {
+            return false;
+        }
+    }
 
 }
