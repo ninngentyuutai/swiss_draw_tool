@@ -21,6 +21,10 @@ return new class extends Migration
             $table->string('option_keys')->nullable();
             $table->string('option_vals')->nullable();
             $table->integer('point')->nullable();
+            $table->integer('os/m')->nullable();
+            $table->integer('dos/m')->nullable();
+            $table->integer('md/m')->nullable();
+            $table->string('status')->nullable();
             $table->timestamps();
         });
     }

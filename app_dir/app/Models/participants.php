@@ -40,7 +40,7 @@ class participants extends Model
      *
      * @param int $tournamentId
      * @param string $status
-     * @return bool update saccess :true
+     * @return object $result
      */
     public function get_tournament_participants($tournamentId, $status) {
 
@@ -65,12 +65,30 @@ class participants extends Model
                     $serchStatus = self::STATUS_END;
                     break;
             }
-            // echo $serchStatus;exit();
-            $result = $this->where('tournament_id', $tournamentId)->where('status', $serchStatus);
+            $result = $this->where('tournament_id', $tournamentId)->where('status', $serchStatus)
+            ->orderBy('point', 'desc');
             return $result;
         } catch ( Exception $ex ) {
             return false;
         }
+    }
+
+    /**
+     * get_aggregate_results
+     * 集計結果を取得
+     *
+     * @param int $tournamentId
+     * @param string $status
+     * @return 
+     */
+    public function get_aggregate_results($tournamentId, $status) {
+
+    // get_aggregate_results
+    }
+
+    public function update_result($tournamentId, $roundResults) {
+
+        
     }
 
 

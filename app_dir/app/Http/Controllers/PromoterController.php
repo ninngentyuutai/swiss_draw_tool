@@ -87,7 +87,11 @@ class PromoterController extends Controller
     private function sum_results($tournamentId, $lastRound) {
 
         $matchesModel = new matches();
-        return 999;
+        $roundResults = $matchesModel->get_round_results($tournamentId, $lastRound);
+        $participantsModel = new participants();
+        $result = $participantsModel->update_result($tournamentId, $roundResults);
+
+        return $result;
 
     }
 
@@ -117,26 +121,40 @@ class PromoterController extends Controller
         // }
 
         $participantsModel = new participants();
-        $participants = $participantsModel->get_tournament_participants($tournamentId,'created');
+        $participants = $participantsModel->get_tournament_participants($tournamentId, 'created');
         $participantsCount = $participants->count();
-        $combination = $this->set_combination($participants);
-
 
         $tournamentsModel = new tournaments();
         $minMember = $tournamentsModel->get_min_member($tournamentId);
-        if ($minMember > $participants) {
+        if ($minMember > $participantsCount) {
             echo '参加者はいませんでした';exit();
         }
-        echo '参加者はいました';exit();
+
         $matchesModel = new matches();
+        $combination = $this->set_combination($tournamentId, $participantsModel, $matchesModel);
+
         $nextRound = 1;
         $result = $matchesModel->create_matches($tournamentId, $nextRound, $combination);
         return $tournamentId;exit();
 
-
     }
 
-    private function set_combination() {
+    private function set_combination($tournamentId, $participants, $participantsModel, $matchesModel) {
+
+        $combination = [];
+        $samePointIds = [];
+        foreach ($participants as $key => $participant) {
+            if ($participant->point === $participants[$participant + 1]->point) {
+                $samePointIds[$key]['id'] = $participant->id;
+            } elseif(count($samePointIds)) {
+                //最後の同ポイント
+                $samePointIds[$key]['id'] = $participant->id;
+                foreach ($samePointIds as $key => $samePointId) {
+                    $samePointIds[$key]['SOS'] = $participantsModel->get_sos($samePointIds[$key]['id']);
+                }
+            }
+        }
+
 
     }
 

@@ -118,13 +118,29 @@ class matches extends Model
                 ['tournament_id', $tournamentId],
                 ['round', $round],
                 ['status', '<>', self::STATUS_TWO_END],        
-            ]);
-            $result = is_null($round) ? true : false;
+            ])->count();
+            $result = $matches == 0 ? true : false;
             return $result;
         }
     }
 
-    public function aaa() {
-        
+    /**
+     * get_round_results
+     * 指定大会、ラウンドの結果を取得
+     *
+     * @param int $tournamentId
+     * @param int $round
+     * @return bool
+     */
+    public function get_round_results($tournamentId, $round) {
+        $matches = $this->select('id', 'result', 'participant1_id', 'participant2_id')
+            ->where([
+                ['tournament_id', $tournamentId],
+                ['round', $round],
+                ['status', self::STATUS_TWO_END]
+            ])
+            ->get();
+        return $matches;
+
     }
 }
