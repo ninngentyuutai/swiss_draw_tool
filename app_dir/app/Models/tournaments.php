@@ -8,6 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class tournaments extends Model
 {
     protected $table = 'tournaments';
+    const STATUS_BEFORE_START = 0;
+    const STATUS_IN_SESSION = 1;
+    const STATUS_END = 2;
+
+
 
     /**
      * create_tournament
@@ -15,13 +20,20 @@ class tournaments extends Model
      *
      * @param int $userId
      * @param  $startDateTime
-     * @return bool update saccess :true
+     * @param int $minMember
+     * 
+     * @return int update saccess :true
      */
-    public function create_tournament(int $userId, $startDateTime) {
+    public function create_tournament(int $userId, $startDateTime, $minMember, $recruit, $release) {
         try {
             $tournament['promoter_id'] = $userId;
             $tournament['start_date_time'] = $startDateTime;
+            $tournament['min_member'] = $minMember;
+            $tournament['recruit'] = $recruit;
+            $tournament['release'] = $release;
+
             $savetournament = $this->insert($tournament);
+
             return true;
         } catch ( Exception $ex ) {
             return false;

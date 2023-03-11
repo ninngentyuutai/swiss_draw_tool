@@ -9,6 +9,9 @@ use App\Models\participants;
 
 class PromoterController extends Controller
 {
+    const POINT_WIN = 1;
+    const POINT_DROW = 0.5;
+    const POINT_LOSS = 0;
 
     public function create_start_tournament() {
         // 作成可能チェック
@@ -32,17 +35,22 @@ class PromoterController extends Controller
      */
     public function create_end_tournament(Request $request) {
         //この辺テストデータ
-        $combination[0] = [1,2];
-        $combination[1] = [3,4];
+        // $combination[0] = [1,2];
+        // $combination[1] = [3,4];
         $userId = 1;
         $startDatetime = now();
+        $minMember = 5;
+        $recruit = 0;
+        $release = 0;
         //
 
         $tournamentsModel = new tournaments();
 
-        $result = $tournamentsModel->create_tournament($userId, $startDatetime);
-        if (!$result) {
+        $execution = $tournamentsModel->create_tournament($userId, $startDatetime, $minMember, $recruit, $release);
+        if (!$execution) {
             echo 'ようわからんDBエラー';exit();
+        } else {
+            echo $tournamentsModel->get_tournament_id($userId);exit();
         }
 
     }
@@ -70,7 +78,7 @@ class PromoterController extends Controller
 
             $sumResults = self::sum_results($tournamentId, $lastRound);
 
-            $result = $matchesModel->create_matches($tournamentId, $nextRound, $combination);
+            $execution = $matchesModel->create_matches($tournamentId, $nextRound, $combination);
         } else {
             echo 'まだ終わってない試合があるやで';exit();
         }
@@ -85,11 +93,29 @@ class PromoterController extends Controller
      * @return bool update saccess :true
      */
     private function sum_results($tournamentId, $lastRound) {
-
+        // 試合情報を集約
         $matchesModel = new matches();
         $roundResults = $matchesModel->get_round_results($tournamentId, $lastRound);
+
+        $roundDatas = [];
+        $i = 0;
+        foreach ($roundResults as $key => $roundResult) {
+            $roundDatas[$i]['id'] = $roundResult->participant1_id;
+            $roundDatas[$i]['opponent'] = $roundResult->participant2_id;
+            $roundDatas[$i]['point'] = self::conv_result_to_point($roundResult->result);
+            $i = $i + 1;
+            $roundDatas[$i]['id'] = $roundResult->participant2_id;
+            $roundDatas[$i]['opponent'] = $roundResult->participant1_id;
+            $roundDatas[$i]['point'] = self::conv_result_to_point($roundResult->result, true);
+            $i = $i + 1;
+        }
+
         $participantsModel = new participants();
-        $result = $participantsModel->update_result($tournamentId, $roundResults);
+
+        $execution = $participantsModel->update_point($tournamentId, $roundDatas, $roundResults[0]->round);
+
+
+        $execution = $participantsModel->update_result($tournamentId, $roundResults);
 
         return $result;
 
@@ -98,7 +124,6 @@ class PromoterController extends Controller
     /**
      * Batch
     */
-
 
     /**
      * start_tournament
@@ -123,7 +148,6 @@ class PromoterController extends Controller
         $participantsModel = new participants();
         $participants = $participantsModel->get_tournament_participants($tournamentId, 'created');
         $participantsCount = $participants->count();
-
         $tournamentsModel = new tournaments();
         $minMember = $tournamentsModel->get_min_member($tournamentId);
         if ($minMember > $participantsCount) {
@@ -131,7 +155,7 @@ class PromoterController extends Controller
         }
 
         $matchesModel = new matches();
-        $combination = $this->set_combination($tournamentId, $participantsModel, $matchesModel);
+        $combination = $this->set_combination($tournamentId, $participants, $participantsModel, $matchesModel);
 
         $nextRound = 1;
         $result = $matchesModel->create_matches($tournamentId, $nextRound, $combination);
@@ -139,23 +163,79 @@ class PromoterController extends Controller
 
     }
 
+    // ここからプライベート
     private function set_combination($tournamentId, $participants, $participantsModel, $matchesModel) {
 
         $combination = [];
-        $samePointIds = [];
-        foreach ($participants as $key => $participant) {
-            if ($participant->point === $participants[$participant + 1]->point) {
-                $samePointIds[$key]['id'] = $participant->id;
-            } elseif(count($samePointIds)) {
-                //最後の同ポイント
-                $samePointIds[$key]['id'] = $participant->id;
-                foreach ($samePointIds as $key => $samePointId) {
-                    $samePointIds[$key]['SOS'] = $participantsModel->get_sos($samePointIds[$key]['id']);
-                }
+
+        $samePointIdGroups = [];
+        
+        $x = 0;
+        //同じポイント状況の人をグループ
+        for ($i=0; $i < count($participants); $i++) {
+
+            if ($i !== 0 && $participants[$i]->point !== $participants[$i - 1]->point) {
+                $x = $x + 1;
+            }
+            $samePointIdGroups[$x][] = ['id' => $participants[$i]->id, 'point' => $participants[$i]->point];
+        }
+        //グループ内でパートナー探し 
+        foreach ($samePointIdGroups as $key => $samePointIdGroup) {
+
+            foreach ($samePointIdGroup as $key => $samePointIds) {
+                //var_dump($samePointIds);
+            }
+            // if () {
+
+            // }
+            # code...
+        }
+        var_dump($samePointIdGroups);
+        exit();
+
+    }
+    /**
+     * conv_result_to_point
+     * 対戦結果をもとに勝敗ポイントを返却
+     *
+     * @param string $result
+     * @return int $point
+     */
+    private function conv_result_to_point($result, $is2p = false) {
+        // const POINT_WIN = 1;
+        // const POINT_DROW = 0.5;
+        // const POINT_LOSS = 0;
+        $games = explode(',', $result);
+        $isWin = 0;
+        foreach ($games as $key => $value) {
+            $isWin = $isWin + (integer)$value;
+        }
+        if ($is2p) {
+            switch ($isWin) {
+                case $isWin >= 1:
+                    $point = self::POINT_WIN;
+                    break;
+                case 0:
+                    $point = self::POINT_DROW;
+                    break;
+                default:
+                    $point = self::POINT_LOSS;
+                break;
+            }
+        } else {
+            switch ($isWin) {
+                case $isWin < 0:
+                    $point = self::POINT_WIN;
+                    break;
+                case 0:
+                    $point = self::POINT_DROW;
+                    break;
+                default:
+                    $point = self::POINT_LOSS;
+                break;
             }
         }
-
-
+        return $point;
     }
 
 

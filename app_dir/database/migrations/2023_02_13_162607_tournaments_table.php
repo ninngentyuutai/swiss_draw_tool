@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('status')->nullable();       
             $table->dateTime('start_date_time');
             $table->integer('min_member');
+            $table->integer('recruit');
+            $table->integer('release');
             $table->timestamps();
 
 

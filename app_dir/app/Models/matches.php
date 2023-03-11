@@ -91,15 +91,15 @@ class matches extends Model
      * 終了済み回戦数を取得
      *
      * @param int $tournamentId
-     * @return int $round
+     * @return int $return
      */
     public function get_last_round($tournamentId) {
         $round = $this->select('round')
             ->where('tournament_id', $tournamentId)
             ->orderBy('round')
             ->first();
-        $result = is_null($round) ? 0 : $round['round'];
-        return $result;
+        $return = is_null($round) ? 0 : $round['round'];
+        return $return;
     }
 
     /**
@@ -130,10 +130,10 @@ class matches extends Model
      *
      * @param int $tournamentId
      * @param int $round
-     * @return bool
+     * @return object $matches
      */
     public function get_round_results($tournamentId, $round) {
-        $matches = $this->select('id', 'result', 'participant1_id', 'participant2_id')
+        $matches = $this->select('id', 'result', 'participant1_id', 'participant2_id', 'round')
             ->where([
                 ['tournament_id', $tournamentId],
                 ['round', $round],

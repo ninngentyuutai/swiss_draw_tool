@@ -8,11 +8,19 @@ use Illuminate\Database\Eloquent\Model;
 class participants extends Model
 {
     protected $table = 'participants';
+    protected $fillable = ['battle_record', 'point'];
+
 
     const STATUS_CREATED = 0;
     const STATUS_ACTIVE = 1;
     const STATUS_DEACTIVE = 2;
     const STATUS_END = 3;
+
+    //ここは要件レベルで煮詰めたいけどとりま参考サイトの数字
+    const POINT_WIN = 1;
+    const POINT_DROW = 0.5;
+    const POINT_LOSS = 0;
+
 
     /**
      * create_participant
@@ -27,6 +35,10 @@ class participants extends Model
             $participant['user_id'] = $userId;
             $participant['tournament_id'] = $tournamentId;
             $participant['status'] = self::STATUS_CREATED;
+            $participant['point'] = 0;
+            $participant['os/m'] = 0;
+            $participant['dos/m'] = 0;
+            $participant['md/m'] = 0;
             $saveParticipants = $this->insert($participant);
             return true;
         } catch ( Exception $ex ) {
@@ -66,7 +78,11 @@ class participants extends Model
                     break;
             }
             $result = $this->where('tournament_id', $tournamentId)->where('status', $serchStatus)
-            ->orderBy('point', 'desc');
+            ->orderBy('point', 'desc')
+            ->orderBy('os/m', 'desc')
+            ->orderBy('dos/m', 'desc')
+            ->orderBy('md/m', 'desc')
+            ->get();
             return $result;
         } catch ( Exception $ex ) {
             return false;
@@ -85,6 +101,40 @@ class participants extends Model
 
     // get_aggregate_results
     }
+
+    /**
+     * update_point
+     * ポイント、対戦済み相手の更新
+     *
+     * @param int $tournamentId
+     * @param array $roundDatas
+     * @param int $round
+     * @return bool update saccess :true
+     */
+    public function update_point($tournamentId, $roundDatas, $round) {
+        // const POINT_WIN = 1;
+        // const POINT_DROW = 0.5;
+        // const POINT_LOSS = 0;
+        try {
+            $targets = $this->select('battle_record', 'point')
+            ->where('tournament_id', $tournamentId);
+            foreach ($roundDatas as $key => $roundData) {
+                $target = $targets->where('id', $roundData['id'])->first();
+
+                $battleRecord = $target->battle_record . ',' . (string)$roundData['opponent'];
+                $point = $target->point + $roundData['point'];
+                $target->update([
+                    'battle_record' => $battleRecord,
+                    'point' => $point
+                ]);
+            }
+            return true;
+        } catch ( Exception $ex ) {
+            return false;
+        }
+    }
+
+
 
     public function update_result($tournamentId, $roundResults) {
 

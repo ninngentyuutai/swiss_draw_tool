@@ -39,12 +39,12 @@ class ParticipantController extends Controller
 
         //この辺テストデータ
         //userIdはリクエストから取らない
-        $userId = 2;
+        $userId = 1;
         //
         $tournamentId = $request['tournament_id'];
 
         $participantsModel = new participants();
-        $participantsModel->create_participant($userId, $tournamentId);
-
+        $return = $participantsModel->create_participant($userId, $tournamentId);
+        echo (string)$return; exit();
     }
 }

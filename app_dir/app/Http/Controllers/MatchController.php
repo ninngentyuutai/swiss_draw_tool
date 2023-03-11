@@ -27,8 +27,8 @@ class MatchController extends Controller
 
         $id = $request['id'];
         //$result = $request['result'];
-        $result = $matchesModel->updateResult($id, $participant, $result, $status);
-        echo $result;exit();
+        $execution = $matchesModel->updateResult($id, $participant, $result, $status);
+        echo $execution;exit();
 
 
     }
