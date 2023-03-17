@@ -12,13 +12,37 @@ class PromoterController extends Controller
     const POINT_WIN = 1;
     const POINT_DROW = 0.5;
     const POINT_LOSS = 0;
+    // ユーザーが同時に主催可能な大会の上限
+    const MAX_PROMOTE = 5;
+    const STATUS_BEFORE_START = 0;
+    const STATUS_IN_SESSION = 1;
 
+    // 要検討：
+
+
+
+
+    /**
+     * create_start_tournament
+     * 大会登録開始
+     *
+     * @param Request $request
+     * @return array $tournaments　ユーザーが作成したことのある過去の大会のデータを返す
+     */
     public function create_start_tournament() {
+        //この辺テストデータ
+        $userId = 1;
+        //
+
+
+
+
+
         // 作成可能チェック
-        // todo x件の作成済みを条件化
-        $isCreateable = true;
+        $isCreateable = self::is_createable($userId);
 
         if ($isCreateable) {
+            // ユーザーが作成したことのある過去の大会のデータを返す
 
         } else {
             echo 'まだ';exit();
@@ -28,7 +52,7 @@ class PromoterController extends Controller
 
     /**
      * create_end_tournament
-     * 大会登録
+     * 大会登録完了
      *
      * @param Request $request
      * @return bool update saccess :true
@@ -46,11 +70,11 @@ class PromoterController extends Controller
 
         $tournamentsModel = new tournaments();
 
-        $execution = $tournamentsModel->create_tournament($userId, $startDatetime, $minMember, $recruit, $release);
-        if (!$execution) {
+        $tournamentId = $tournamentsModel->create_tournament($userId, $startDatetime, $minMember, $recruit, $release);
+        if ($tournamentId === 0) {
             echo 'ようわからんDBエラー';exit();
         } else {
-            echo $tournamentsModel->get_tournament_id($userId);exit();
+            echo $tournamentId;exit();
         }
 
     }
@@ -177,20 +201,34 @@ class PromoterController extends Controller
             if ($i !== 0 && $participants[$i]->point !== $participants[$i - 1]->point) {
                 $x = $x + 1;
             }
-            $samePointIdGroups[$x][] = ['id' => $participants[$i]->id, 'point' => $participants[$i]->point];
+            $samePointIdGroups[$x][] = 
+                ['id' => $participants[$i]->id, 'point' => $participants[$i]->point, 'battle_record' => explode(',', $participants[$i]->battle_record), 'priority' => $participants[$i]->priority];
         }
-        //グループ内でパートナー探し 
+
+        //グループ内でパートナー探し
+        $retunParticipants = [];
+        // retunParticipantsのparticipant2_idに入れたIDを通常配列としても利用
+        $alreadyDecidedParticipants = [];
+        // var_dump($samePointIdGroups);exit();
         foreach ($samePointIdGroups as $key => $samePointIdGroup) {
 
-            foreach ($samePointIdGroup as $key => $samePointIds) {
-                //var_dump($samePointIds);
+            //次戦優先度が高いやつ
+            $priority = '';
+            if ($samePointIdGroup[0]['priority'] > 0) {
+                $priority = $samePointIdGroup[0];
+            //優先度ない場合
+            } else {
+                $point = $samePointIdGroup[0]['point'];
+                foreach ($samePointIdGroup as $key => $samePointParticipant) {
+                    $pair = self::looking_for_partner($samePointIdGroup, $key, $alreadyDecidedParticipants);
+                    if ($pair) {
+                        $retunParticipants[] = $pair;
+                    }
+                }
             }
-            // if () {
 
-            // }
-            # code...
         }
-        var_dump($samePointIdGroups);
+        var_dump($retunParticipants);
         exit();
 
     }
@@ -237,6 +275,117 @@ class PromoterController extends Controller
         }
         return $point;
     }
+
+    /**
+     * is_createable
+     * ユーザーが新しい大会を主催できるか
+     *
+     * @param int $userId
+     * @return bool createable :true
+     */
+    private function is_createable($userId) {
+        // const STATUS_BEFORE_START = 0;
+        // const STATUS_IN_SESSION = 1;
+        // const STATUS_END = 2;
+        $tournamentsModel = new tournaments();
+        $tournaments = $tournamentsModel->get_users_tournaments($tournamentId);        
+        $isCreateable = true;
+        $unfinished = 0;
+        foreach ($tournaments as $key => $tournament) {
+            switch ($tournament->status) {
+                // 条件：未終了大会が上限以上ないこと
+                case self::STATUS_BEFORE_START:
+                    $unfinished = $unfinished + 1;
+                    break;
+                // 条件：アクティブな大会がないこと
+                case self::STATUS_IN_SESSION:
+                    $isCreateable = false;
+                    break;
+            }
+        }
+        if ($isCreateable && $unfinished >= self::MAX_PROMOTE) {
+            $isCreateable = false;
+        }
+        return $isCreateable;
+    }
+    /**
+     * looking_for_partner
+     * グループ内でパートナー探し
+     *
+     * @param array $samePointParticipant
+     * @param array &$alreadyDecidedParticipants
+
+     * @return array $retunParticipants
+     */
+    private function looking_for_partner($samePointIdGroup, $key, &$alreadyDecidedParticipants) {
+        $samePointParticipant = $samePointIdGroup[$key];
+
+        //既に対戦相手決まってる人はパス
+        if (is_int(array_search($samePointParticipant['id'], $alreadyDecidedParticipants))) {
+            return false;
+        } else {
+            $samePointParticipant['opponentable'] = [];
+            // $samePointParticipant['id']主観で相手(samePointParticipant2)を探す
+            foreach ($samePointIdGroup as $key2 => $samePointParticipant2) {    
+                // 対戦済みではない or 既に対戦相手決まってる人 or 自分はパス
+                if (!(is_int(array_search($samePointParticipant2['id'], $samePointParticipant['battle_record'])) || is_int(array_search($samePointParticipant2['id'], $alreadyDecidedParticipants)) || $samePointParticipant['id'] === $samePointParticipant2['id'])) {
+                    //対戦可能に入れる
+                    $samePointParticipant['opponentable'][] = $samePointParticipant2['id'];
+                }
+            }
+
+            //対戦可能な相手数で分岐
+            switch (count($samePointParticipant['opponentable'])) {
+                case 0:
+                    echo 'call0';
+
+                    // ポイントが低いグループがある
+                    if (count($samePointIdGroup) !== $key + 1) {
+                        echo 'ある';
+         
+                    // ポイントが低いグループがない
+                    } else {
+                        echo 'ない';
+
+                    }
+
+
+                    //ここ再起にしよう
+                    # code...
+                    return false;
+                    break;
+                case 1:
+                    echo 'call1';
+                    // 自分を1
+                    $retunParticipant['participant1_id'] = $samePointParticipant['id'];
+                    // 相手を2
+                    $retunParticipant['participant2_id'] = $samePointParticipant['opponentable'][0];
+                    // 決定済みリスト更新
+                    $alreadyDecidedParticipants[] = $samePointParticipant['id'];
+                    $alreadyDecidedParticipants[] = $samePointParticipant['opponentable'][0];
+                    break;
+                default:
+                echo 'call2';
+                    // 自分を1
+                    $retunParticipant['participant1_id'] = $samePointParticipant['id'];
+                    $participant2Id = '';
+                    // 対戦可能な相手から未決定かつランダムな相手を検索
+                    do {
+                        $participant2Id = $samePointParticipant['opponentable'][random_int(0, count($samePointParticipant['opponentable']) - 1)];
+                    } while (is_int(array_search($participant2Id, $alreadyDecidedParticipants)));
+                    // 相手を2
+                    $retunParticipant['participant2_id'] = $participant2Id;
+                    // 決定済みリスト更新
+                    $alreadyDecidedParticipants[] = $samePointParticipant['id'];
+                    $alreadyDecidedParticipants[] = $participant2Id;
+
+                    break;
+            }
+            return $retunParticipant;
+        }
+
+    }
+
 
 
 }

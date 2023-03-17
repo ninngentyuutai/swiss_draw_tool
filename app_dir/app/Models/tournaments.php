@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class tournaments extends Model
 {
     protected $table = 'tournaments';
+    protected $fillable =
+        ['promoter_id', 'start_date_time', 'min_member', 'recruit', 'release'];
     const STATUS_BEFORE_START = 0;
     const STATUS_IN_SESSION = 1;
     const STATUS_END = 2;
-
-
 
     /**
      * create_tournament
@@ -21,8 +21,7 @@ class tournaments extends Model
      * @param int $userId
      * @param  $startDateTime
      * @param int $minMember
-     * 
-     * @return int update saccess :true
+     * @return int update saccess : tournament_id , failure: 0
      */
     public function create_tournament(int $userId, $startDateTime, $minMember, $recruit, $release) {
         try {
@@ -31,31 +30,40 @@ class tournaments extends Model
             $tournament['min_member'] = $minMember;
             $tournament['recruit'] = $recruit;
             $tournament['release'] = $release;
+            $tournament['status'] = self::STATUS_BEFORE_START;
+            $createdAt = now(); 
+            $tournament['created_at'] = $createdAt;
 
             $savetournament = $this->insert($tournament);
+            if ($savetournament) {
+                $tournamentId = $this->select('id')
+                ->where('promoter_id', $userId)
+                ->where('created_at', $createdAt)
+                ->first();
+                return $tournamentId->id;
+            } else {
+                return 0;
+            }
 
-            return true;
-        } catch ( Exception $ex ) {
+        } catch (\Throwable $e) {
             return false;
         }
     }
 
     /**
-     * get_tournament_id
-     * ユーザーが主催するアクティブな大会IDを取得
+     * get_users_tournaments
+     * ユーザーが主催する大会を取得
      *
      * @param int $userId
-     * @return int id
+     * @return array tournaments
      */
-    public function get_tournament_id(int $userId) {
+    public function get_users_tournaments(int $userId) {
         try {
-            $tournamentId = $this->select('id')
-                ->where('promoter_id', $userId)
-                // nullは仮
-                ->where('status', null)
-                ->first();
-            return $tournamentId;
-        } catch ( Exception $ex ) {
+            $tournaments = $this->where('promoter_id', $userId)
+                ->orderBy('created_at', 'desc')
+                ->get();
+            return $tournaments;
+        } catch (\Throwable $e) {
             return false;
         }
 
@@ -74,7 +82,7 @@ class tournaments extends Model
                 ->where('id', $tournamentId)
                 ->first();
             return $selectResult->min_member;
-        } catch ( Exception $ex ) {
+        } catch (\Throwable $e) {
             return false;
         }
     }

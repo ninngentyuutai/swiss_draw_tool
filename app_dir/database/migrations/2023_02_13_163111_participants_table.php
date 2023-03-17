@@ -25,6 +25,7 @@ return new class extends Migration
             $table->integer('dos/m')->nullable();
             $table->integer('md/m')->nullable();
             $table->string('status')->nullable();
+            $table->integer('priority')->nullable();  
             $table->timestamps();
         });
     }

@@ -39,6 +39,7 @@ class participants extends Model
             $participant['os/m'] = 0;
             $participant['dos/m'] = 0;
             $participant['md/m'] = 0;
+            $participant['priority'] = 0;
             $saveParticipants = $this->insert($participant);
             return true;
         } catch ( Exception $ex ) {
@@ -78,6 +79,7 @@ class participants extends Model
                     break;
             }
             $result = $this->where('tournament_id', $tournamentId)->where('status', $serchStatus)
+            ->orderBy('priority', 'desc')
             ->orderBy('point', 'desc')
             ->orderBy('os/m', 'desc')
             ->orderBy('dos/m', 'desc')
