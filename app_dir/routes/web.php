@@ -20,6 +20,8 @@ Route::get('/aggregate/all', [AggregateController::class, 'index']);
 
 Route::get('/promoter/next_match', [PromoterController::class, 'next_match']);
 
+
+Route::get('/match/reserve', [MatchController::class, 'reserve']);
 Route::get('/match/victory_report', [MatchController::class, 'victory_report']);
 
 Route::get('/registration/register_end_participant', [ParticipantController::class, 'register_end_participant']);

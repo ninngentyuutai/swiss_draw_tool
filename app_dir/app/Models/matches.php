@@ -13,11 +13,12 @@ class matches extends Model
 
     const PARTICIPANT_PROMOTER = 0;
     const STATUS_CREATED = 0;
+    //一人目の参加者が着席
     const STATUS_ONE_RESERVED = 1;
     const STATUS_TWO_RESERVED = 2;
-    const STATUS_START = 3;
-    const STATUS_ONE_END = 4;
-    const STATUS_TWO_END = 5;
+    const STATUS_ONE_END = 3;
+    const STATUS_TWO_END = 4;
+    const STATUS_APPEAL = 5;
 
     protected $table = 'matches';
     /**
@@ -51,7 +52,7 @@ class matches extends Model
     }
     
     /**
-     * updateResult
+     * update_result
      * 対戦結果を登録
      *
      * @param string $id
@@ -60,7 +61,7 @@ class matches extends Model
      * @param $status
      * @return bool update saccess :true
      */
-    public function updateResult(int $id, string $participant, array $result, $status) {
+    public function update_result(int $id, string $participant, array $result, $status) {
         //statusチェック
 
 
@@ -86,6 +87,26 @@ class matches extends Model
         return true;
     }
     
+
+    /**
+     * update_status
+     * ステータス更新
+     *
+     * @param int $id
+     * @param int $participant
+     * @param int $status
+     * @return int $return
+     */
+    public function update_status($id, $participant, $status) {
+        $data = [
+            'last_updated_by' => $participant,
+            'status' => $status
+        ];
+        $this->where('id', $id)
+          ->update($data);
+        return true;
+    }
+
     /**
      * get_last_round
      * 終了済み回戦数を取得
@@ -101,6 +122,22 @@ class matches extends Model
         $return = is_null($round) ? 0 : $round['round'];
         return $return;
     }
+
+    /**
+     * get_status
+     * 試合のステータスと最終更新者を取得
+     *
+     * @param int $tournamentId
+     * @return object $matche
+     */
+    public function get_status($tournamentId) {
+        $matche = $this->select('status', 'last_updated_by')
+            ->where('tournament_id', $tournamentId)
+            ->first();
+        $return = $matche;
+        return $return;
+    }
+
 
     /**
      * is_next_matches

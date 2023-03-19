@@ -146,6 +146,39 @@ class PromoterController extends Controller
     }
 
     /**
+     * match_manual_change
+     * 勝敗手動変更
+     *
+     * @param Request $request
+     * @param int $status 
+     * @return bool update saccess :true
+     */
+    function match_manual_change(Request $request, int $status = 3) {
+        //この辺テストデータ
+        //participantIdはリクエストから取らない
+        $participant = 1;
+        $result = [1,0,2];
+        //
+
+        $id = $request['id'];
+        $matchesModel = new matches();
+
+        $execution = $matchesModel->update_result($id, $participant, $result, $status);
+        echo $execution;exit();
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    /**
      * Batch
     */
 
@@ -209,9 +242,52 @@ class PromoterController extends Controller
         $retunParticipants = [];
         // retunParticipantsのparticipant2_idに入れたIDを通常配列としても利用
         $alreadyDecidedParticipants = [];
-        // var_dump($samePointIdGroups);exit();
-        foreach ($samePointIdGroups as $key => $samePointIdGroup) {
 
+        self::looking_for_partner($samePointIdGroups, $alreadyDecidedParticipants, $retunParticipants);
+
+
+        // foreach ($samePointIdGroups as $key => $samePointIdGroup) {
+        //     $retunParticipants2 = self::looking_for_partner($samePointIdGroup, $alreadyDecidedParticipants);
+            
+        //     $retunParticipants = is_array($retunParticipants2)? array_merge($retunParticipants, $retunParticipants2): $retunParticipants;
+            // array_merge($retunParticipants, self::looking_for_partner($samePointIdGroup, $alreadyDecidedParticipants));
+        
+
+
+            // //次戦優先度が高いやつ
+            // $priority = '';
+            // if ($samePointIdGroup[0]['priority'] > 0) {
+            //     $priority = $samePointIdGroup[0];
+            // //優先度ない場合
+            // } else {
+            //     $point = $samePointIdGroup[0]['point'];
+            //     foreach ($samePointIdGroup as $key => $samePointParticipant) {
+            //         $pair = self::looking_for_partner($samePointIdGroup, $key, $alreadyDecidedParticipants);
+            //         if ($pair) {
+            //             $retunParticipants[] = $pair;
+            //         }
+            //     }
+            // }
+
+        // }
+        var_dump($retunParticipants);
+        exit();
+
+    }
+
+    /**
+     * looking_for_partner
+     * グループ内でパートナー探し
+     *
+     * @param array $samePointIdGroups
+     * @param array &$alreadyDecidedParticipants
+     * @param array &$retunParticipants
+     * @param array $lonelyParticipant
+     * @return void
+     */
+    private function looking_for_partner($samePointIdGroups, &$alreadyDecidedParticipants, &$retunParticipants, $completedPoint = '') {
+
+        foreach ($samePointIdGroups as $key => $samePointIdGroup) {
             //次戦優先度が高いやつ
             $priority = '';
             if ($samePointIdGroup[0]['priority'] > 0) {
@@ -219,19 +295,128 @@ class PromoterController extends Controller
             //優先度ない場合
             } else {
                 $point = $samePointIdGroup[0]['point'];
-                foreach ($samePointIdGroup as $key => $samePointParticipant) {
-                    $pair = self::looking_for_partner($samePointIdGroup, $key, $alreadyDecidedParticipants);
-                    if ($pair) {
-                        $retunParticipants[] = $pair;
-                    }
+                //再起時に前周で済んだポイントのマッチングは飛ばす
+                if (is_int($completedPoint) && $completedPoint > $point) {
+                    break;
                 }
+                foreach ($samePointIdGroup as $key2 => $samePointParticipant) {
+                    //既に対戦相手決まってる人はパス
+                    if (in_array($samePointParticipant['id'], $alreadyDecidedParticipants)) {
+                    } else {
+                        $samePointParticipant['opponentable'] = [];
+                        // $samePointParticipant['id']主観で相手(samePointParticipant2)を探す
+                        foreach ($samePointIdGroup as $key3 => $samePointParticipant2) {    
+                            // 対戦済みではない or 既に対戦相手決まってる人 or 自分はパス
+                            if (!(in_array($samePointParticipant2['id'], $samePointParticipant['battle_record']) || in_array($samePointParticipant2['id'], $alreadyDecidedParticipants) || $samePointParticipant['id'] === $samePointParticipant2['id'])) {
+                                //対戦可能に入れる
+                                $samePointParticipant['opponentable'][] = $samePointParticipant2['id'];
+                            }
+                        }
+
+                        //対戦可能な相手数で分岐
+                        switch (count($samePointParticipant['opponentable'])) {
+                            case 0:
+                                echo 'call0';
+
+                                // ポイントが低いグループがある
+                                if (count($samePointIdGroups) !== $key + 1) {
+                                    // 一段ポイントの低いグループの先頭に加えて再起
+                                    $samePointIdGroups[$key + 1] = array_merge([$samePointParticipant], $samePointIdGroups[$key + 1]);
+                                    unset($samePointIdGroups[$key][$key2]);
+                                    self::looking_for_partner($samePointIdGroups, $alreadyDecidedParticipants, $retunParticipants);
+                                // ポイントが低いグループがない
+                                } else {
+                                    //$samePointIdGroupsを逆走して$samePointIdGroups[$key]['opponentable']にIDの格納されてるグループを探す
+                                    $opponentableIds = false;
+
+                                    for ($i=count($samePointIdGroups); $i > 0 ; $i--) { 
+                                        if (isset($samePointIdGroups[$i]['opponentable'])) {
+                                            $opponentableIds = $samePointIdGroups[$i]['opponentable'];
+                                            break;
+                                        }
+                                    }
+                                    //見つかった
+                                    if ($opponentableIds) {
+                                        //変更可能なマッチングを解消
+                                        $unsetKeys = [];
+                                        $unsetIds = [];
+                                        //対象の登録マッチ情報削除
+                                        foreach ($retunParticipants as $unsetKey => $retunParticipant) {
+                                            //kokowonaosunndaaaaaaaaaaaaa
+                                            if (in_array($retunParticipant['participant1_id'], $opponentableIds)) {
+                                                $unsetKeys[] = $unsetKey;
+                                                $unsetIds[] = $retunParticipant['participant1_id'];
+                                                $unsetIds[] = $retunParticipant['participant2_id'];
+                                            }
+                                        }
+                                        foreach ($unsetKeys as $unsetKey) {
+                                            unset($retunParticipants[$unsetKey]);
+                                        }
+                                        //対戦相手決定済みリストから除外
+                                        foreach ($unsetIds as $unsetId) {
+                                            unset($alreadyDecidedParticipants[array_search($unsetId, $alreadyDecidedParticipants)]);
+                                        }
+                                        // 変更可能ポイントのグループの先頭に加えて再起
+                                        unset($samePointIdGroups[$key][$key2]);
+
+
+                                        self::looking_for_partner($samePointIdGroups, $alreadyDecidedParticipants, $retunParticipants);
+                                    //見つからなかった
+                                    } else {
+
+                                    }
+
+
+
+                                    echo 'ない';
+
+                                }
+
+
+                                //ここ再起にしよう
+                                # code...
+                                //return false;
+                                break;
+                            case 1:
+                                echo 'call1';
+                                // 自分を1 相手を2
+                                $retunParticipants[] = [
+                                    'participant1_id' => $samePointParticipant['id'],
+                                    'participant2_id' => $samePointParticipant['opponentable'][0],
+                                    'point' => $point
+                                ];
+                                // 決定済みリスト更新
+                                $alreadyDecidedParticipants[] = $samePointParticipant['id'];
+                                $alreadyDecidedParticipants[] = $samePointParticipant['opponentable'][0];
+                                break;
+                            default:
+                            echo 'call2';
+                                $participant2Id = '';
+                                // 対戦可能な相手から未決定かつランダムな相手を検索
+                                do {
+                                    $participant2Id = $samePointParticipant['opponentable'][random_int(0, count($samePointParticipant['opponentable']) - 1)];
+                                } while (in_array($participant2Id, $alreadyDecidedParticipants));
+                                // 自分を1 相手を2
+                                $retunParticipants[] = [
+                                    'participant1_id' => $samePointParticipant['id'],
+                                    'participant2_id' => $participant2Id,
+                                    'point' => $point
+                                ];
+                                // 決定済みリスト更新
+                                $alreadyDecidedParticipants[] = $samePointParticipant['id'];
+                                $alreadyDecidedParticipants[] = $participant2Id;
+                                // 変更可能フラグを立てる
+                                $samePointIdGroups[$key]['opponentable'][] = $samePointParticipant['id'];
+                                break;
+                        }
+                    }
+
+                }
+
             }
-
         }
-        var_dump($retunParticipants);
-        exit();
-
     }
+
     /**
      * conv_result_to_point
      * 対戦結果をもとに勝敗ポイントを返却
@@ -308,83 +493,8 @@ class PromoterController extends Controller
         }
         return $isCreateable;
     }
-    /**
-     * looking_for_partner
-     * グループ内でパートナー探し
-     *
-     * @param array $samePointParticipant
-     * @param array &$alreadyDecidedParticipants
-
-     * @return array $retunParticipants
-     */
-    private function looking_for_partner($samePointIdGroup, $key, &$alreadyDecidedParticipants) {
-        $samePointParticipant = $samePointIdGroup[$key];
-
-        //既に対戦相手決まってる人はパス
-        if (is_int(array_search($samePointParticipant['id'], $alreadyDecidedParticipants))) {
-            return false;
-        } else {
-            $samePointParticipant['opponentable'] = [];
-            // $samePointParticipant['id']主観で相手(samePointParticipant2)を探す
-            foreach ($samePointIdGroup as $key2 => $samePointParticipant2) {    
-                // 対戦済みではない or 既に対戦相手決まってる人 or 自分はパス
-                if (!(is_int(array_search($samePointParticipant2['id'], $samePointParticipant['battle_record'])) || is_int(array_search($samePointParticipant2['id'], $alreadyDecidedParticipants)) || $samePointParticipant['id'] === $samePointParticipant2['id'])) {
-                    //対戦可能に入れる
-                    $samePointParticipant['opponentable'][] = $samePointParticipant2['id'];
-                }
-            }
-
-            //対戦可能な相手数で分岐
-            switch (count($samePointParticipant['opponentable'])) {
-                case 0:
-                    echo 'call0';
-
-                    // ポイントが低いグループがある
-                    if (count($samePointIdGroup) !== $key + 1) {
-                        echo 'ある';
-         
-                    // ポイントが低いグループがない
-                    } else {
-                        echo 'ない';
-
-                    }
 
 
-                    //ここ再起にしよう
-                    # code...
-                    return false;
-                    break;
-                case 1:
-                    echo 'call1';
-                    // 自分を1
-                    $retunParticipant['participant1_id'] = $samePointParticipant['id'];
-                    // 相手を2
-                    $retunParticipant['participant2_id'] = $samePointParticipant['opponentable'][0];
-                    // 決定済みリスト更新
-                    $alreadyDecidedParticipants[] = $samePointParticipant['id'];
-                    $alreadyDecidedParticipants[] = $samePointParticipant['opponentable'][0];
-                    break;
-                default:
-                echo 'call2';
-                    // 自分を1
-                    $retunParticipant['participant1_id'] = $samePointParticipant['id'];
-                    $participant2Id = '';
-                    // 対戦可能な相手から未決定かつランダムな相手を検索
-                    do {
-                        $participant2Id = $samePointParticipant['opponentable'][random_int(0, count($samePointParticipant['opponentable']) - 1)];
-                    } while (is_int(array_search($participant2Id, $alreadyDecidedParticipants)));
-                    // 相手を2
-                    $retunParticipant['participant2_id'] = $participant2Id;
-                    // 決定済みリスト更新
-                    $alreadyDecidedParticipants[] = $samePointParticipant['id'];
-                    $alreadyDecidedParticipants[] = $participant2Id;
-
-                    break;
-            }
-            return $retunParticipant;
-        }
-
-    }
 
 
 
