@@ -63,14 +63,27 @@ class MatchController extends Controller
     function victory_report(Request $request) {
         //この辺テストデータ
         //participantIdはリクエストから取らない
-        $participant = 1;
-        $result = [1,0,2];
+        $participant = 2;
+        $result = [0,1,2];
         //
+
+        //主催者による結果修正は戦績登録終了後
+        // これおかしいわな
+        // アップデートが有効かのチェックはコントローラー行きかな
+        
+        // if ($participant == PARTICIPANT_PROMOTER && $status !== STATUS_TWO_END) {
+        //     throw new Exception("STATUS_BEFORE_END");
+        // } else {
+        //     if($status ) {
+
+        //     }
+        // }
+
+
 
         $id = $request['id'];
         $status = 3;
         $matchesModel = new matches();
-
         $execution = $matchesModel->update_result($id, $participant, $result, $status);
         echo $execution;exit();
     }

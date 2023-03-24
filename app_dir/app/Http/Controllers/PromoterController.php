@@ -167,17 +167,6 @@ class PromoterController extends Controller
         echo $execution;exit();
     }
 
-
-
-
-
-
-
-
-
-
-
-
     /**
      * Batch
     */
@@ -244,33 +233,6 @@ class PromoterController extends Controller
         $alreadyDecidedParticipants = [];
 
         self::looking_for_partner($samePointIdGroups, $alreadyDecidedParticipants, $retunParticipants);
-
-
-        // foreach ($samePointIdGroups as $key => $samePointIdGroup) {
-        //     $retunParticipants2 = self::looking_for_partner($samePointIdGroup, $alreadyDecidedParticipants);
-            
-        //     $retunParticipants = is_array($retunParticipants2)? array_merge($retunParticipants, $retunParticipants2): $retunParticipants;
-            // array_merge($retunParticipants, self::looking_for_partner($samePointIdGroup, $alreadyDecidedParticipants));
-        
-
-
-            // //次戦優先度が高いやつ
-            // $priority = '';
-            // if ($samePointIdGroup[0]['priority'] > 0) {
-            //     $priority = $samePointIdGroup[0];
-            // //優先度ない場合
-            // } else {
-            //     $point = $samePointIdGroup[0]['point'];
-            //     foreach ($samePointIdGroup as $key => $samePointParticipant) {
-            //         $pair = self::looking_for_partner($samePointIdGroup, $key, $alreadyDecidedParticipants);
-            //         if ($pair) {
-            //             $retunParticipants[] = $pair;
-            //         }
-            //     }
-            // }
-
-        // }
-        var_dump($retunParticipants);
         exit();
 
     }
@@ -285,7 +247,7 @@ class PromoterController extends Controller
      * @param array $lonelyParticipant
      * @return void
      */
-    private function looking_for_partner($samePointIdGroups, &$alreadyDecidedParticipants, &$retunParticipants, $completedPoint = '') {
+    private function looking_for_partner($samePointIdGroups, &$alreadyDecidedParticipants, &$retunParticipants, $completedPoint = '', $setOpponentable = true) {
 
         foreach ($samePointIdGroups as $key => $samePointIdGroup) {
             //次戦優先度が高いやつ
@@ -300,10 +262,11 @@ class PromoterController extends Controller
                     break;
                 }
                 foreach ($samePointIdGroup as $key2 => $samePointParticipant) {
+                    //対戦可能IDリストを定義
+                    $samePointParticipant['opponentable'] = [];
                     //既に対戦相手決まってる人はパス
                     if (in_array($samePointParticipant['id'], $alreadyDecidedParticipants)) {
                     } else {
-                        $samePointParticipant['opponentable'] = [];
                         // $samePointParticipant['id']主観で相手(samePointParticipant2)を探す
                         foreach ($samePointIdGroup as $key3 => $samePointParticipant2) {    
                             // 対戦済みではない or 既に対戦相手決まってる人 or 自分はパス
@@ -332,6 +295,7 @@ class PromoterController extends Controller
                                     for ($i=count($samePointIdGroups); $i > 0 ; $i--) { 
                                         if (isset($samePointIdGroups[$i]['opponentable'])) {
                                             $opponentableIds = $samePointIdGroups[$i]['opponentable'];
+                                            $opponentablePoint = $samePointIdGroups[$i]['point'];
                                             break;
                                         }
                                     }
@@ -342,8 +306,8 @@ class PromoterController extends Controller
                                         $unsetIds = [];
                                         //対象の登録マッチ情報削除
                                         foreach ($retunParticipants as $unsetKey => $retunParticipant) {
-                                            //kokowonaosunndaaaaaaaaaaaaa
-                                            if (in_array($retunParticipant['participant1_id'], $opponentableIds)) {
+                                            //変更可能以下のポイントのマッチを削除対象として集約
+                                            if ($retunParticipant['point'] >= $opponentablePoint) {
                                                 $unsetKeys[] = $unsetKey;
                                                 $unsetIds[] = $retunParticipant['participant1_id'];
                                                 $unsetIds[] = $retunParticipant['participant2_id'];
@@ -357,25 +321,17 @@ class PromoterController extends Controller
                                             unset($alreadyDecidedParticipants[array_search($unsetId, $alreadyDecidedParticipants)]);
                                         }
                                         // 変更可能ポイントのグループの先頭に加えて再起
+                                        $samePointIdGroups[$i] = array_merge([$samePointParticipant], $samePointIdGroups[$i]);
                                         unset($samePointIdGroups[$key][$key2]);
-
-
-                                        self::looking_for_partner($samePointIdGroups, $alreadyDecidedParticipants, $retunParticipants);
+                                        self::looking_for_partner($samePointIdGroups, $alreadyDecidedParticipants, $retunParticipants, $opponentablePoint, false);
                                     //見つからなかった
                                     } else {
-
+                                        echo 'ない';
+                                        break;
                                     }
-
-
-
-                                    echo 'ない';
 
                                 }
 
-
-                                //ここ再起にしよう
-                                # code...
-                                //return false;
                                 break;
                             case 1:
                                 echo 'call1';
@@ -405,8 +361,10 @@ class PromoterController extends Controller
                                 // 決定済みリスト更新
                                 $alreadyDecidedParticipants[] = $samePointParticipant['id'];
                                 $alreadyDecidedParticipants[] = $participant2Id;
-                                // 変更可能フラグを立てる
-                                $samePointIdGroups[$key]['opponentable'][] = $samePointParticipant['id'];
+                                // 変更可能グループindexを格納
+                                if ($setOpponentable) {
+                                    $opponentablePointIdGroupIndexs[] = $key;
+                                }
                                 break;
                         }
                     }

@@ -7,6 +7,15 @@ use App\Models\participants;
 
 class ParticipantController extends Controller
 {
+
+    //参加登録、未参加、参加中、参加終了
+    const STATUS_CREATED = 0;
+    const STATUS_NOT_ATTENDED = 1;
+    const STATUS_ACTIVE = 2;
+    const STATUS_DEACTIVE = 3;
+    const STATUS_UNREGISTER = 4;
+
+
     // todo userid  はパラメータで貰わない
 
     /**
@@ -46,5 +55,36 @@ class ParticipantController extends Controller
         $participantsModel = new participants();
         $return = $participantsModel->create_participant($userId, $tournamentId);
         echo (string)$return; exit();
+    }
+
+    /**
+     * unregister_end_participant
+     * 大会参加者登録解除
+     *
+     * @param Request $request
+     * @return bool update saccess :true
+     */
+    public function unregister_end_participant(Request $request) {
+
+        //この辺テストデータ
+        //userIdはリクエストから取らない
+        $userId = 1;
+        //
+
+        $tournamentId = $request['tournament_id'];
+
+        $participantsModel = new participants();
+        $getStatus = $participantsModel->get_status($userId, $tournamentId);
+        $status = $getStatus->status;
+        $doUpdate = false;
+        // ステータスが参加登録の場合
+        if ($status == self::STATUS_CREATED) {
+            $doUpdate = true;
+        }
+        if ($doUpdate) {
+            $status = self::STATUS_UNREGISTER;
+            $execution = $participantsModel->update_status($userId, $tournamentId, $status);
+            echo 'dekita';exit();
+        }
     }
 }

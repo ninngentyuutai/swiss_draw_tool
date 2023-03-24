@@ -62,32 +62,33 @@ class matches extends Model
      * @return bool update saccess :true
      */
     public function update_result(int $id, string $participant, array $result, $status) {
-        //statusチェック
+        DB::transaction(function () use($id, $participant, $result, $status) {
+            //statusチェック
+            $getStatus = self::get_status($id);
+            if (is_null($getStatus)) {
+                //存在しないID　不正
+                return false;
+            }
+            $oldStatus = $getStatus->status;
+            $lastUpdatedBy = $getStatus->last_updated_by;
+            //　更新できるかチェック
+            $isUpdate = self::is_update_status($participant, $lastUpdatedBy, $status, $oldStatus);
+            if ($isUpdate) {
+                $data = [
+                    'last_updated_by' => $participant,
+                    'result' => $result,
+                    'status' => $status
+                ];
+                $this->where('id', $id)
+                ->update($data);
+            } else {
+                return false;
+            }
 
-
-        //主催者による結果修正は戦績登録終了後
-        // これおかしいわな
-        // アップデートが有効かのチェックはコントローラー行きかな
-        
-        // if ($participant == PARTICIPANT_PROMOTER && $status !== STATUS_TWO_END) {
-        //     throw new Exception("STATUS_BEFORE_END");
-        // } else {
-        //     if($status ) {
-
-        //     }
-        // }
-
-        $data = [
-            'last_updated_by' => $participant,
-            'result' => $result,
-            'status' => $status
-        ];
-        $this->where('id', $id)
-          ->update($data);
+        });
         return true;
     }
     
-
     /**
      * update_status
      * ステータス更新
@@ -98,12 +99,25 @@ class matches extends Model
      * @return int $return
      */
     public function update_status($id, $participant, $status) {
-        $data = [
-            'last_updated_by' => $participant,
-            'status' => $status
-        ];
-        $this->where('id', $id)
-          ->update($data);
+        DB::transaction(function () use($id, $participant, $status) {
+            //statusチェック
+            $getStatus = self::get_status($id);
+            if (is_null($getStatus)) {
+                //存在しないID　不正
+                return false;
+            }
+            $oldStatus = $getStatus->status;
+            $lastUpdatedBy = $getStatus->last_updated_by;
+            //　更新できるかチェック
+            $isUpdate = self::is_update_status($participant, $lastUpdatedBy, $status, $oldStatus);
+            $data = [
+                'last_updated_by' => $participant,
+                'status' => $status
+            ];
+            $this->where('id', $id)
+              ->update($data);
+        });
+
         return true;
     }
 
@@ -162,6 +176,69 @@ class matches extends Model
     }
 
     /**
+     * is_update_status
+     * ステータス更新可否を判定
+     *
+     * @param int $participant
+     * @param int $lastUpdatedBy
+     * @param int $status
+     * @param int $oldStatus
+     * @return object $matche
+     */
+    public function is_update_status($participant, $lastUpdatedBy, $status, $oldStatus) {
+        // const STATUS_CREATED = 0;
+        // //一人目の参加者が着席
+        // const STATUS_ONE_RESERVED = 1;
+        // const STATUS_TWO_RESERVED = 2;
+        // const STATUS_ONE_END = 3;
+        // const STATUS_TWO_END = 4;
+        // const STATUS_APPEAL = 5;
+        $return = false;
+        switch ($status) {
+            case self::STATUS_CREATED:
+                $return = true;
+                break;
+            
+            case self::STATUS_ONE_RESERVED:
+                if ($oldStatus === self::STATUS_CREATED) {
+                    $return = true;
+                }
+                break;
+
+            case self::STATUS_TWO_RESERVED:
+                if ($oldStatus === self::STATUS_ONE_RESERVED && $participant !== $lastUpdatedBy) {
+                    $return = true;
+                }
+                $return = true;
+                break;
+                
+            case self::STATUS_ONE_END:
+                if ($oldStatus === self::STATUS_TWO_RESERVED || $oldStatus === self::STATUS_ONE_END) {
+                    $return = true;
+                }
+                $return = true;
+                break;  
+
+            case self::STATUS_TWO_END:
+                if (($oldStatus === self::STATUS_ONE_END || $oldStatus === self::STATUS_APPEAL) && $participant !== $lastUpdatedBy) {
+                    $return = true;
+                }
+                $return = true;
+                break;
+
+            case self::STATUS_APPEAL:
+                if ($oldStatus === self::STATUS_ONE_END && $participant !== $lastUpdatedBy) {
+                    $return = true;
+                }
+                $return = true;
+                break;
+        }
+        return $return;
+    }
+
+
+
+    /**
      * get_round_results
      * 指定大会、ラウンドの結果を取得
      *
@@ -180,4 +257,12 @@ class matches extends Model
         return $matches;
 
     }
+
+
+
+
+
+
+
+    
 }

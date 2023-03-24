@@ -10,11 +10,12 @@ class participants extends Model
     protected $table = 'participants';
     protected $fillable = ['battle_record', 'point'];
 
-
+    //参加登録、未参加、参加中、参加終了
     const STATUS_CREATED = 0;
-    const STATUS_ACTIVE = 1;
-    const STATUS_DEACTIVE = 2;
-    const STATUS_END = 3;
+    const STATUS_NOT_ATTENDED = 1;
+    const STATUS_ACTIVE = 2;
+    const STATUS_DEACTIVE = 3;
+    const STATUS_UNREGISTER = 4;
 
     //ここは要件レベルで煮詰めたいけどとりま参考サイトの数字
     const POINT_WIN = 1;
@@ -56,11 +57,13 @@ class participants extends Model
      * @return object $result
      */
     public function get_tournament_participants($tournamentId, $status) {
-
+        // 参加登録、未参加、参加中、参加終了
         // const STATUS_CREATED = 0;
-        // const STATUS_ACTIVE = 1;
-        // const STATUS_DEACTIVE = 2;
-        // const STATUS_END = 3;
+        // const STATUS_NOT_ATTENDED = 1;
+        // const STATUS_ACTIVE = 2;
+        // const STATUS_DEACTIVE = 3;
+        // const STATUS_UNREGISTER = 4;
+
         try {
 
             $serchStatus = '';
@@ -68,14 +71,17 @@ class participants extends Model
                 case 'created':
                     $serchStatus = self::STATUS_CREATED;
                     break;
+                case 'not attended':
+                    $serchStatus = self::STATUS_NOT_ATTENDED;
+                    break;
                 case 'active':
                     $serchStatus = self::STATUS_ACTIVE;
                     break;
                 case 'deactive':
                     $serchStatus = self::STATUS_DEACTIVE;
                     break;
-                case 'end':
-                    $serchStatus = self::STATUS_END;
+                case 'unregister':
+                    $serchStatus = self::STATUS_UNREGISTER;
                     break;
             }
             $result = $this->where('tournament_id', $tournamentId)->where('status', $serchStatus)
@@ -136,8 +142,26 @@ class participants extends Model
         }
     }
 
+    /**
+     * update_status
+     * ステータス更新
+     *
+     * @param int $userId
+     * @param int $tournamentId
+     * @param int $status
+     * @return int $return
+     */
+    public function update_status($userId, $tournamentId, $status) {
+        $data = [
+            'status' => $status
+        ];
+        $this->where('user_id', $userId)
+            ->where('tournament_id', $tournamentId)
+            ->update($data);
+        return true;
+    }
 
-
+    
     public function update_result($tournamentId, $roundResults) {
 
         
