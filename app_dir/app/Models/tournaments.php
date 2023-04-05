@@ -10,6 +10,8 @@ class tournaments extends Model
     protected $table = 'tournaments';
     protected $fillable =
         ['promoter_id', 'start_date_time', 'min_member', 'recruit', 'release'];
+    protected $casts = ['start_date_time'];
+
     const STATUS_BEFORE_START = 0;
     const STATUS_IN_SESSION = 1;
     const STATUS_END = 2;

@@ -1,10 +1,4 @@
 <?php
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AggregateController;
-use App\Http\Controllers\MatchController;
-use App\Http\Controllers\PromoterController;
-use App\Http\Controllers\ParticipantController;
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -15,6 +9,16 @@ use App\Http\Controllers\ParticipantController;
 | contains the "web" middleware group. Now create something great!
 |
 */
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AggregateController;
+use App\Http\Controllers\MatchController;
+use App\Http\Controllers\PromoterController;
+use App\Http\Controllers\ParticipantController;
+use App\Http\Controllers\UserController;
+
+// Route::post('/user/login', [UserController::class, 'api_login']);
+
+//Route::get('/user/login', [HelloController::class, 'index']);
 
 Route::get('/aggregate/all', [AggregateController::class, 'index']);
 

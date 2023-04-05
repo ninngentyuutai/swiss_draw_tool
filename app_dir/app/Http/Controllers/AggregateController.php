@@ -6,7 +6,14 @@ use Illuminate\Http\Request;
 
 class AggregateController extends Controller
 {
-    public function sum_results() {
-        echo 'こんんうづわ';
+    public function index() {
+    return response()->json(
+        [
+            'sample' => 'サンプル??'
+        ]
+        );
+
+
+
     }
 }
