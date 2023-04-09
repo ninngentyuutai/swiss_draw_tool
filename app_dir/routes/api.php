@@ -14,33 +14,14 @@ use App\Http\Controllers\AggregateController;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-// Route::get('/user/login',function() {
-//     // return 'まずこうした場合どうなるか見てみようじゃん';
-//     // return json_encode('次にこうするとどうなるか');
-//     return response()->json(
-//         [
-//             'sample' => 'サンプル'
-//         ]
-//         );
+use App\Http\Controllers\UserController;
 
-// });
+
 Route::middleware(['middleware' => 'api'])->group(function () {
-    // Route::post('/user/login', [UserController::class, 'api_login']);
-
-Route::post('/user/login',function() {
-    // return 'まずこうした場合どうなるか見てみようじゃん';
-    // return json_encode('次にこうするとどうなるか');
-    return response()->json(
-        [
-            'sample' => 'サンプル'
-        ]
-        );
-
+    Route::post('/user/login', [UserController::class, 'api_login']);
 });
 
 
-
-});
 
 
 
