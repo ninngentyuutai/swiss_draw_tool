@@ -1,16 +1,11 @@
-import { useParams, useLocation } from "react-router-dom";
-
-
+// import { useParams, useLocation } from 'react-router-dom';
+import ApiControl from './../common/ApiControl';
 
 
 function UserDitail() {
-    const { name } = useParams();
-    const { search } = useLocation();
-    console.log(name);
-    console.log(search);
-
-    return <div>aiueoxx</div>;
-  
+  const params = {'action': 'user/login'};
+  const test = ApiControl(params);
+    return (<div>{test.result}</div>);
   }
 
 export default UserDitail;
