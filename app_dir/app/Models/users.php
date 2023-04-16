@@ -14,18 +14,38 @@ class users extends Model
 {
     protected $table = 'users';
     protected $fillable =
-        ['name', 'wp_id', 'tournament_ids', 'api_key'];
+        ['wp_id', 'tournament_ids'];
     protected $casts = ['updated_at'];
 
     /**
      * create_user
-     * 大会を登録
+     * ユーザー作成
+     *
+     * @param int $wpId
+     * @return int update saccess : true , false
+     */
+    public function create_user($wpId) {
+        try {
+            $user['wp_id'] = $wpId;
+            $saveParticipants = $this->insert($user);
+            return true;
+        } catch ( Exception $ex ) {
+            return false;
+        }
+    }
+
+
+
+
+    /**
+     * login_user
+     * ユーザーログイン
      *
      * @param int $wpId
      * @param  string $apiKey
      * @return int update saccess : true , false
      */
-    public function create_user($wpId, $apiKey) {
+    public function login_user($wpId, $apiKey) {
         try {
             $user['wp_id'] = $wpId;
             $user['api_key'] = $apiKey;

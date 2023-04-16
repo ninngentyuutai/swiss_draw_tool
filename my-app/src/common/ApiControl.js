@@ -1,15 +1,15 @@
 import axios from "axios";
 import React from "react";
 
-
 function ApiControl(props) {
   const baseURL = "http://localhost/swiss_draw_tool/app_dir/public/api/" + props.action;
   const [post, setPost] = React.useState(null);
-
   React.useEffect(() => {
-    axios.post(baseURL).then((response) => {
+    axios.post(
+      baseURL, {
+        datas: props.params
+      }).then((response) => {
         setPost(response.data);
-
     });
   }, [post]);
 
@@ -18,7 +18,6 @@ function ApiControl(props) {
   } else {
     return (post);
   }
-  
 
 }
 export default ApiControl;

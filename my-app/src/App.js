@@ -1,7 +1,7 @@
 import './App.css';
 import { BrowserRouter, Route, Routes} from 'react-router-dom';
 import UserDitail from './feature/userditail';
-import Test from './test';
+import Test from './feature/test';
 
 function App() {
     return (

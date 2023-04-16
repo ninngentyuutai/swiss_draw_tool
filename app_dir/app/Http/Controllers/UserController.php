@@ -4,33 +4,54 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\users;
+use App\Models\login;
 
 class UserController extends Controller
 {
 
     /**
      * api_login
-     * フロントlogin時に発行したキーを保存する
+     * フロントloginしapi_keyを発行する
      *
      * @param Request $request
      * @return bool update saccess :true
      */
     public function api_login(Request $request) {
-        return response()->json(
-            [
-                'result' => 'true'
-            ]
-            );
-        //当初フロントはwp
-        // $wpId = $request['wpId'];
-        // $apiKey = $request['apiKey'];
-        // $usersModel = new users();
-        // $execution = $usersModel->create_user($wpId, $apiKey);
-        // return response()->json(
-        //     [
-        //         'result' => 'true'
-        //     ]
-        //     );
+        $wpId = $request['wp_id'];
+        $loginModel = new login();
+        $result = $loginModel->login($wpId);
+
+        return response()->json(['api_Key' => $result]);
     }
+
+    /**
+     * api_islogin
+     * ユーザーのログインチェック
+     *
+     * @param Request $request
+     * @return result bool login :true
+     */
+    public function api_islogin(Request $request) {
+        $apiKey = $request['datas']['api_key'];
+    
+        $loginModel = new login();
+        if (isset($apiKey)) {
+            // $result = $test;
+            $result = $apiKey;
+            // $result = (string)$loginModel->is_login($apiKey);
+        } else {
+            $result = 'false';
+
+        }
+
+        return response()->json(['result' => $result]);
+    
+
+    }
+
+
+
+
+
 
 }

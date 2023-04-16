@@ -13,10 +13,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('login', function (Blueprint $table) {
             $table->id();
             $table->integer('wp_id');
-            $table->string('tournament_ids')->nullable();
+            $table->string('api_key')->nullable();
+            $table->dateTime('time_out')->nullable();
             $table->timestamps();
         });
     }
@@ -28,6 +29,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('login');
     }
 };

@@ -19,10 +19,12 @@ use App\Http\Controllers\UserController;
 
 Route::middleware(['middleware' => 'api'])->group(function () {
     Route::post('/user/login', [UserController::class, 'api_login']);
+    Route::post('/user/islogin', [UserController::class, 'api_islogin']);
+    // Route::post('/user/islogin', function(){
+        
+    //     return json_encode('result',test';
+    // });
 
-    Route::post('/test', function() {
-        return 'iiiii';
-    });
 
 
 });
